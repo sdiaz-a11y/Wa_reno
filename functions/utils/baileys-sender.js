@@ -5,53 +5,29 @@ const {
 } = require('@whiskeysockets/baileys');
 const path = require('path');
 const os = require('os');
-const fs = require('fs');
-const AdmZip = require('adm-zip');
-const { getStorage } = require('firebase-admin/storage');
+const { descargarSesion, subirSesion } = require('./session-storage');
 
-const SESSION_PATH_EN_STORAGE = 'whatsapp-session/creds.zip';
 const AUTH_FOLDER = path.join(os.tmpdir(), 'baileys-auth');
 
 let socketActivo = null;
 
-// La sesión se vincula una sola vez desde scripts/pair-whatsapp.js (local,
-// con QR). Esta función solo descarga esa sesión ya autenticada desde
-// Storage en cada cold start y la vuelve a subir si Baileys renueva claves.
-async function descargarSesion() {
-  if (fs.existsSync(AUTH_FOLDER)) return;
-
-  const bucket = getStorage().bucket();
-  const [existe] = await bucket.file(SESSION_PATH_EN_STORAGE).exists();
-  if (!existe) {
-    throw new Error(
-      'No hay sesión de WhatsApp vinculada. Corre scripts/pair-whatsapp.js localmente primero.'
-    );
-  }
-
-  const zipPath = path.join(os.tmpdir(), 'creds.zip');
-  await bucket.file(SESSION_PATH_EN_STORAGE).download({ destination: zipPath });
-  fs.mkdirSync(AUTH_FOLDER, { recursive: true });
-  new AdmZip(zipPath).extractAllTo(AUTH_FOLDER, true);
-}
-
-async function subirSesion() {
-  const zip = new AdmZip();
-  zip.addLocalFolder(AUTH_FOLDER);
-  const zipPath = path.join(os.tmpdir(), 'creds-out.zip');
-  zip.writeZip(zipPath);
-  await getStorage().bucket().upload(zipPath, { destination: SESSION_PATH_EN_STORAGE });
-}
-
+// La sesión se vincula desde el botón "Vincular WhatsApp" del Dashboard
+// (ver functions/index.js → iniciarPairingWhatsApp). Esta función solo
+// descarga esa sesión ya autenticada desde Storage en cada cold start.
 async function obtenerSocket() {
   if (socketActivo) return socketActivo;
 
-  await descargarSesion();
+  const hayCredenciales = await descargarSesion(AUTH_FOLDER);
+  if (!hayCredenciales) {
+    throw new Error('No hay sesión de WhatsApp vinculada. Vincúlala desde el Dashboard primero.');
+  }
+
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_FOLDER);
 
   const sock = makeWASocket({ auth: state });
   sock.ev.on('creds.update', async () => {
     await saveCreds();
-    await subirSesion();
+    await subirSesion(AUTH_FOLDER);
   });
 
   sock.ev.on('connection.update', (update) => {

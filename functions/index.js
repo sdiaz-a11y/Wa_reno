@@ -1,11 +1,18 @@
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { onRequest } = require('firebase-functions/v2/https');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { enviarMensaje } = require('./utils/baileys-sender');
 const { esTelefonoValido } = require('./utils/validaciones');
+const { manejarPairing } = require('./utils/pairing');
 
 initializeApp();
 const db = getFirestore();
+
+exports.iniciarPairingWhatsApp = onRequest(
+  { timeoutSeconds: 90, memory: '512MiB', cors: true },
+  manejarPairing
+);
 
 const MAX_POR_HORA = 15;
 const MAX_POR_DIA = 100;

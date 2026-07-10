@@ -11,6 +11,7 @@ import {
 import { collection, query, where, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../hooks/useAuth';
+import WhatsAppPairing from '../components/WhatsAppPairing';
 
 function StatCard({ label, value, icon: Icon, span = '' }) {
   return (
@@ -87,12 +88,15 @@ export default function Dashboard() {
           <span className="eyebrow">Panel general</span>
           <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">Dashboard</h1>
         </div>
-        <Link to="/campanas" className="group btn-pill">
-          Nueva campaña
-          <span className="btn-pill-icon">
-            <CalendarPlus size={14} weight="bold" />
-          </span>
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <WhatsAppPairing />
+          <Link to="/campanas" className="group btn-pill">
+            Nueva campaña
+            <span className="btn-pill-icon">
+              <CalendarPlus size={14} weight="bold" />
+            </span>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
