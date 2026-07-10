@@ -25,7 +25,20 @@ export default function CargadorContactos({ existentes = [], onImportar }) {
       encoding: 'UTF-8',
       skipEmptyLines: true,
       complete: (results) => {
+        console.log('[CSV] filas leídas:', results.data.length, results.data);
+        console.log('[CSV] errores de parseo:', results.errors);
+
         const filas = results.data;
+
+        if (results.errors.length > 0) {
+          setErrorArchivo(`Error leyendo el CSV: ${results.errors[0].message}`);
+          return;
+        }
+        if (filas.length === 0) {
+          setErrorArchivo('El archivo se leyó pero no contiene filas. Verifica que no esté vacío y que use comas como separador.');
+          return;
+        }
+
         const telefonosExistentes = new Set(existentes.map((c) => c.telefono));
         const vistosEnImport = new Set();
 
@@ -53,6 +66,10 @@ export default function CargadorContactos({ existentes = [], onImportar }) {
         });
 
         setPreview({ validas, errores, duplicadosImport, duplicadosDb, total: filas.length });
+      },
+      error: (err) => {
+        console.error('[CSV] error fatal de Papa.parse:', err);
+        setErrorArchivo(`No se pudo leer el archivo: ${err.message}`);
       },
     });
   }

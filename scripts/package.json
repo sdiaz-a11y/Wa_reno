@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "scripts": {
     "pair": "node pair-whatsapp.js",
-    "pair:web": "node pair-whatsapp-web.js"
+    "pair:web": "node pair-whatsapp-web.js",
+    "enviar": "node enviar-campanas.js"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "7.0.0-rc13",
