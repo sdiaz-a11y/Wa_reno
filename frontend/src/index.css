@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  body {
+    background-color: #050505;
+  }
+}
+
+@layer components {
+  .glass-shell {
+    @apply rounded-squircle border border-white/10 bg-white/[0.03] p-1.5 backdrop-blur-2xl;
+  }
+  .glass-core {
+    @apply rounded-[calc(2rem-0.375rem)] bg-white/[0.02] shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)];
+  }
+  .eyebrow {
+    @apply inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-white/60;
+  }
+  .btn-pill {
+    @apply inline-flex items-center gap-3 rounded-full bg-emerald-glow/90 px-6 py-3 text-sm font-semibold text-black transition-all duration-500 ease-fluid hover:bg-emerald-glow active:scale-[0.98];
+  }
+  .btn-pill-icon {
+    @apply flex h-8 w-8 items-center justify-center rounded-full bg-black/10 transition-transform duration-500 ease-fluid group-hover:translate-x-1 group-hover:-translate-y-[1px] group-hover:scale-105;
+  }
+  .input-field {
+    @apply w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition-all duration-300 ease-fluid focus:border-emerald-glow/50 focus:bg-white/[0.05];
+  }
+  .input-field-error {
+    @apply border-red-400/60 focus:border-red-400/80;
+  }
+}
+
+.bg-noise::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
