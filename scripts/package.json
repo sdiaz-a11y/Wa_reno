@@ -6,7 +6,7 @@
     "pair": "node pair-whatsapp.js"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.17.16",
+    "@whiskeysockets/baileys": "7.0.0-rc13",
     "adm-zip": "^0.5.14",
     "firebase-admin": "^12.1.1",
     "qrcode-terminal": "^0.12.0"
