@@ -49,6 +49,7 @@ export default function CargadorContactos({ existentes = [], onImportar }) {
 
         filas.forEach((row, i) => {
           const check = validarFilaCsv(row, i);
+          console.log(`[CSV] fila ${i}:`, row, '→', check);
           if (!check.valido) {
             errores.push(...check.errores);
             return;
