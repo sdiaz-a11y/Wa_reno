@@ -17,5 +17,9 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == resource.data.userId;
       allow write: if false;
     }
+    // Sesión de WhatsApp (Baileys): solo el backend (Admin SDK) la toca.
+    match /_sistema/{id} {
+      allow read, write: if false;
+    }
   }
 }

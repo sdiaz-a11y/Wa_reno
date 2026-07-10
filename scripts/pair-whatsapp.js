@@ -1,11 +1,10 @@
 // Ejecutar UNA sola vez desde tu computadora para vincular WhatsApp.
 // Genera un QR en la terminal; al escanearlo, sube la sesión cifrada
-// a Firebase Storage para que la Cloud Function la reutilice sin
-// volver a pedir QR en cada ejecución.
+// a Firestore (no Storage: requiere plan Blaze) para que la Cloud
+// Function la reutilice sin volver a pedir QR en cada ejecución.
 
 const path = require('path');
 const fs = require('fs');
-const os = require('os');
 const dns = require('dns');
 
 dns.setDefaultResultOrder('ipv4first');
@@ -15,8 +14,6 @@ const admin = require('firebase-admin');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 
 const SERVICE_ACCOUNT_PATH = path.join(__dirname, 'serviceAccountKey.json');
-const STORAGE_BUCKET = 'wa-reno.firebasestorage.app';
-const SESSION_PATH_EN_STORAGE = 'whatsapp-session/creds.zip';
 const AUTH_FOLDER_LOCAL = path.join(__dirname, 'baileys-session');
 
 if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
@@ -29,17 +26,18 @@ if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
 
 admin.initializeApp({
   credential: admin.credential.cert(require(SERVICE_ACCOUNT_PATH)),
-  storageBucket: STORAGE_BUCKET,
 });
 
 async function subirSesion() {
   const zip = new AdmZip();
   zip.addLocalFolder(AUTH_FOLDER_LOCAL);
-  const zipPath = path.join(os.tmpdir(), 'creds.zip');
-  zip.writeZip(zipPath);
+  const credsBase64 = zip.toBuffer().toString('base64');
 
-  await admin.storage().bucket().upload(zipPath, { destination: SESSION_PATH_EN_STORAGE });
-  console.log('\n✅ Sesión subida a Firebase Storage. Ya puedes desplegar la Cloud Function.\n');
+  await admin.firestore().collection('_sistema').doc('whatsapp_session').set({
+    credsBase64,
+    actualizadoEn: new Date(),
+  });
+  console.log('\n✅ Sesión subida a Firestore. Ya puedes desplegar la Cloud Function.\n');
 }
 
 const MAX_REINTENTOS = 5;

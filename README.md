@@ -29,3 +29,24 @@ El backend (`functions/`) se despliega por separado con Firebase CLI, no por Ver
 firebase login
 firebase deploy --only functions,firestore:rules
 ```
+
+**Nota:** desplegar Cloud Functions (incluida `iniciarPairingWhatsApp` y el
+scheduler de campañas) requiere que el proyecto esté en el plan **Blaze**
+(pago por uso; capa gratuita generosa). Sin Blaze, el botón "Vincular
+WhatsApp" del Dashboard no funciona — usa en su lugar los scripts locales.
+
+## Vincular WhatsApp sin Blaze (scripts locales)
+
+La sesión de WhatsApp se guarda en Firestore (colección `_sistema`, doc
+`whatsapp_session`), no en Storage — Storage también requiere Blaze.
+
+1. Descarga `scripts/serviceAccountKey.json` desde Firebase Console →
+   Configuración del proyecto → Cuentas de servicio → Generar nueva clave
+   privada (el archivo queda ignorado por git).
+2. `cd scripts && npm install`
+3. `npm run pair:web` (abre una página en tu navegador con el QR) o
+   `npm run pair` (QR en la terminal).
+4. Escanea con WhatsApp → Ajustes → Dispositivos vinculados.
+
+La sesión sólo debe vincularse una vez; queda activa indefinidamente salvo
+que la desvincules manualmente desde el celular.
