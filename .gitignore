@@ -6,3 +6,5 @@ functions/.env
 *.log
 .firebase/
 firebase-debug.log
+scripts/serviceAccountKey.json
+scripts/baileys-session/
