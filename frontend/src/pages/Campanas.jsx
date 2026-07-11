@@ -10,7 +10,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
-import { X } from 'phosphor-react';
+import { X, Lightning } from 'phosphor-react';
 import { db } from '../services/firebase';
 import { useAuth } from '../hooks/useAuth';
 import SchedulerCampana from '../components/SchedulerCampana';
@@ -68,11 +68,41 @@ export default function Campanas() {
     await updateDoc(doc(db, 'campanas', id), { estado: 'cancelado' });
   }
 
+  const [enviandoAhora, setEnviandoAhora] = useState(false);
+  const [mensajeEnviarAhora, setMensajeEnviarAhora] = useState('');
+
+  async function handleEnviarAhora() {
+    setEnviandoAhora(true);
+    setMensajeEnviarAhora('');
+    try {
+      const resp = await fetch('/api/disparar-envio', { method: 'POST' });
+      const data = await resp.json();
+      setMensajeEnviarAhora(
+        resp.ok ? 'Disparado — el envío corre en unos segundos en GitHub Actions.' : `Error: ${data.error}`
+      );
+    } catch {
+      setMensajeEnviarAhora('No se pudo contactar al servidor.');
+    } finally {
+      setEnviandoAhora(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <span className="eyebrow">Automatización</span>
-        <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">Campañas</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <span className="eyebrow">Automatización</span>
+          <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">Campañas</h1>
+        </div>
+        <div className="text-right">
+          <button onClick={handleEnviarAhora} disabled={enviandoAhora} className="group btn-pill disabled:opacity-40">
+            {enviandoAhora ? 'Disparando…' : 'Enviar ahora'}
+            <span className="btn-pill-icon">
+              <Lightning size={14} weight="bold" />
+            </span>
+          </button>
+          {mensajeEnviarAhora && <p className="mt-2 text-xs text-white/40">{mensajeEnviarAhora}</p>}
+        </div>
       </div>
 
       <SchedulerCampana
