@@ -46,11 +46,14 @@ async function obtenerSocket() {
 
 async function enviarMensaje(telefono, texto, intentos = 3) {
   const sock = await obtenerSocket();
-  const jid = `${telefono.replace('+', '')}@s.whatsapp.net`;
 
   for (let intento = 1; intento <= intentos; intento++) {
     try {
-      await sock.sendMessage(jid, { text: texto });
+      const [resultado] = await sock.onWhatsApp(telefono.replace('+', ''));
+      if (!resultado?.exists) {
+        return { exito: false, error: 'Ese número no tiene WhatsApp activo.' };
+      }
+      await sock.sendMessage(resultado.jid, { text: texto });
       return { exito: true };
     } catch (error) {
       if (intento === intentos) {

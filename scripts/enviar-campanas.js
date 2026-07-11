@@ -115,11 +115,15 @@ async function procesarCampana(sock, campanaDoc) {
       }
 
       const mensaje = renderPlantilla(plantilla.contenido, contacto);
-      const jid = `${contacto.telefono.replace('+', '')}@s.whatsapp.net`;
       let exito = true;
       let error = null;
       try {
-        await sock.sendMessage(jid, { text: mensaje });
+        const numeroSinMas = contacto.telefono.replace('+', '');
+        const [resultado] = await sock.onWhatsApp(numeroSinMas);
+        if (!resultado?.exists) {
+          throw new Error('Ese número no tiene WhatsApp activo.');
+        }
+        await sock.sendMessage(resultado.jid, { text: mensaje });
         console.log(`  ✅ Enviado a ${contacto.nombre} (${contacto.telefono})`);
       } catch (e) {
         exito = false;
