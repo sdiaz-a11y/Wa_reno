@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
-import { WarningCircle, PaperPlaneTilt, CheckCircle } from 'phosphor-react';
+import { WarningCircle, Lightning, CheckCircle } from 'phosphor-react';
 import { validarCampana } from '../services/validaciones';
 
-export default function SchedulerCampana({ plantillas, contactos, listas, mensajesHoy, hayActiva, onCrear }) {
+export default function SchedulerCampana({ plantillas, contactos, listas, mensajesHoy, hayActiva, onEnviar }) {
   const [plantillaId, setPlantillaId] = useState('');
   const [modoContactos, setModoContactos] = useState('lista');
   const [listaId, setListaId] = useState('');
   const [contactosIds, setContactosIds] = useState([]);
-  const [fecha, setFecha] = useState('');
   const [confirmando, setConfirmando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
 
   const idsFinales =
     modoContactos === 'todos'
@@ -19,8 +19,8 @@ export default function SchedulerCampana({ plantillas, contactos, listas, mensaj
   const plantilla = plantillas.find((p) => p.id === plantillaId);
 
   const validacion = useMemo(
-    () => validarCampana({ plantillaId, contactosIds: idsFinales, fechaProgramada: fecha, mensajesHoy }),
-    [plantillaId, idsFinales, fecha, mensajesHoy]
+    () => validarCampana({ plantillaId, contactosIds: idsFinales, mensajesHoy }),
+    [plantillaId, idsFinales, mensajesHoy]
   );
 
   function toggleContacto(id) {
@@ -28,12 +28,16 @@ export default function SchedulerCampana({ plantillas, contactos, listas, mensaj
   }
 
   async function handleConfirmar() {
-    await onCrear({ plantillaId, contactosIds: idsFinales, fechaProgramada: new Date(fecha) });
-    setConfirmando(false);
-    setPlantillaId('');
-    setListaId('');
-    setContactosIds([]);
-    setFecha('');
+    setEnviando(true);
+    try {
+      await onEnviar({ plantillaId, contactosIds: idsFinales });
+      setConfirmando(false);
+      setPlantillaId('');
+      setListaId('');
+      setContactosIds([]);
+    } finally {
+      setEnviando(false);
+    }
   }
 
   return (
@@ -116,16 +120,6 @@ export default function SchedulerCampana({ plantillas, contactos, listas, mensaj
           )}
         </div>
 
-        <div>
-          <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/40">Fecha y hora</label>
-          <input
-            type="datetime-local"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            className="input-field"
-          />
-        </div>
-
         <p className="text-xs text-white/30">Mensajes enviados hoy: {mensajesHoy}/100</p>
 
         {validacion.errores.map((e, i) => (
@@ -145,20 +139,19 @@ export default function SchedulerCampana({ plantillas, contactos, listas, mensaj
             disabled={!validacion.valido || hayActiva}
             className="group btn-pill disabled:opacity-40"
           >
-            Programar campaña
+            Armar campaña
             <span className="btn-pill-icon">
-              <PaperPlaneTilt size={14} weight="bold" />
+              <Lightning size={14} weight="bold" />
             </span>
           </button>
         ) : (
           <div className="space-y-3 rounded-2xl border border-emerald-glow/20 bg-emerald-glow/5 p-5">
             <p className="text-sm text-white/80">
-              Enviarás <span className="text-emerald-glow">{idsFinales.length}</span> mensajes el{' '}
-              {fecha && new Date(fecha).toLocaleString('es-MX')}.
+              Enviarás <span className="text-emerald-glow">{idsFinales.length}</span> mensajes ahora mismo.
             </p>
             <div className="flex items-center gap-3">
-              <button onClick={handleConfirmar} className="group btn-pill">
-                Confirmar
+              <button onClick={handleConfirmar} disabled={enviando} className="group btn-pill disabled:opacity-40">
+                {enviando ? 'Enviando…' : 'Enviar ahora'}
                 <span className="btn-pill-icon"><CheckCircle size={14} weight="bold" /></span>
               </button>
               <button onClick={() => setConfirmando(false)} className="text-xs text-white/40 hover:text-white/70">

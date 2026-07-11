@@ -111,20 +111,12 @@ export function validarArchivoCsv(file) {
   return { valido: errores.length === 0, errores };
 }
 
-export function validarCampana({ plantillaId, contactosIds, fechaProgramada, mensajesHoy = 0 }) {
+export function validarCampana({ plantillaId, contactosIds, mensajesHoy = 0 }) {
   const errores = [];
   const advertencias = [];
 
   if (!plantillaId) errores.push('Debes seleccionar una plantilla.');
   if (!contactosIds || contactosIds.length === 0) errores.push('Debes seleccionar al menos 1 contacto.');
-
-  const ahora = new Date();
-  const fecha = new Date(fechaProgramada);
-  if (isNaN(fecha.getTime()) || fecha <= ahora) {
-    errores.push('La fecha y hora deben ser futuras.');
-  } else if (fecha.getTime() - ahora.getTime() < 5 * 60 * 1000) {
-    advertencias.push('La campaña está programada dentro de los próximos 5 minutos.');
-  }
 
   const totalTrasEnvio = mensajesHoy + (contactosIds?.length || 0);
   if (totalTrasEnvio > 100) {
