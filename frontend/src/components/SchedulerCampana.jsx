@@ -2,14 +2,20 @@ import { useMemo, useState } from 'react';
 import { WarningCircle, PaperPlaneTilt, CheckCircle } from 'phosphor-react';
 import { validarCampana } from '../services/validaciones';
 
-export default function SchedulerCampana({ plantillas, contactos, mensajesHoy, hayActiva, onCrear }) {
+export default function SchedulerCampana({ plantillas, contactos, listas, mensajesHoy, hayActiva, onCrear }) {
   const [plantillaId, setPlantillaId] = useState('');
-  const [modoContactos, setModoContactos] = useState('todos');
+  const [modoContactos, setModoContactos] = useState('lista');
+  const [listaId, setListaId] = useState('');
   const [contactosIds, setContactosIds] = useState([]);
   const [fecha, setFecha] = useState('');
   const [confirmando, setConfirmando] = useState(false);
 
-  const idsFinales = modoContactos === 'todos' ? contactos.map((c) => c.id) : contactosIds;
+  const idsFinales =
+    modoContactos === 'todos'
+      ? contactos.map((c) => c.id)
+      : modoContactos === 'lista'
+      ? contactos.filter((c) => c.listaId === listaId).map((c) => c.id)
+      : contactosIds;
   const plantilla = plantillas.find((p) => p.id === plantillaId);
 
   const validacion = useMemo(
@@ -25,6 +31,7 @@ export default function SchedulerCampana({ plantillas, contactos, mensajesHoy, h
     await onCrear({ plantillaId, contactosIds: idsFinales, fechaProgramada: new Date(fecha) });
     setConfirmando(false);
     setPlantillaId('');
+    setListaId('');
     setContactosIds([]);
     setFecha('');
   }
@@ -55,7 +62,14 @@ export default function SchedulerCampana({ plantillas, contactos, mensajesHoy, h
 
         <div>
           <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/40">Contactos</label>
-          <div className="mb-3 flex gap-2">
+          <div className="mb-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setModoContactos('lista')}
+              className={`rounded-full px-4 py-2 text-xs transition-colors duration-300 ${modoContactos === 'lista' ? 'bg-emerald-glow/90 text-black' : 'bg-white/5 text-white/50'}`}
+            >
+              Por lista
+            </button>
             <button
               type="button"
               onClick={() => setModoContactos('todos')}
@@ -71,6 +85,20 @@ export default function SchedulerCampana({ plantillas, contactos, mensajesHoy, h
               Específicos
             </button>
           </div>
+          {modoContactos === 'lista' && (
+            <select
+              value={listaId}
+              onChange={(e) => setListaId(e.target.value)}
+              className="input-field appearance-none"
+            >
+              <option value="">Selecciona una lista…</option>
+              {listas.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.nombre} ({contactos.filter((c) => c.listaId === l.id).length})
+                </option>
+              ))}
+            </select>
+          )}
           {modoContactos === 'especificos' && (
             <div className="max-h-48 space-y-1 overflow-y-auto rounded-2xl border border-white/5 bg-white/[0.02] p-3">
               {contactos.map((c) => (

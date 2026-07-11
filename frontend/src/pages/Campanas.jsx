@@ -19,6 +19,7 @@ export default function Campanas() {
   const { user } = useAuth();
   const [plantillas, setPlantillas] = useState([]);
   const [contactos, setContactos] = useState([]);
+  const [listas, setListas] = useState([]);
   const [campanas, setCampanas] = useState([]);
   const [mensajesHoy, setMensajesHoy] = useState(0);
 
@@ -30,6 +31,9 @@ export default function Campanas() {
       ),
       onSnapshot(query(collection(db, 'contactos'), where('userId', '==', user.uid)), (s) =>
         setContactos(s.docs.map((d) => ({ id: d.id, ...d.data() })))
+      ),
+      onSnapshot(query(collection(db, 'listas'), where('userId', '==', user.uid)), (s) =>
+        setListas(s.docs.map((d) => ({ id: d.id, ...d.data() })))
       ),
       onSnapshot(query(collection(db, 'campanas'), where('userId', '==', user.uid)), (s) => {
         const docs = s.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -74,6 +78,7 @@ export default function Campanas() {
       <SchedulerCampana
         plantillas={plantillas}
         contactos={contactos}
+        listas={listas}
         mensajesHoy={mensajesHoy}
         hayActiva={hayActiva}
         onCrear={handleCrear}

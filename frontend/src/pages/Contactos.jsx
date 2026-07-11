@@ -21,27 +21,50 @@ const POR_PAGINA = 10;
 export default function Contactos() {
   const { user } = useAuth();
   const [contactos, setContactos] = useState([]);
+  const [listas, setListas] = useState([]);
+  const [filtroLista, setFiltroLista] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [pagina, setPagina] = useState(1);
   const [seleccionados, setSeleccionados] = useState(new Set());
 
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, 'contactos'), where('userId', '==', user.uid));
-    const unsub = onSnapshot(q, (snap) => {
-      setContactos(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-    return unsub;
+    const unsubs = [
+      onSnapshot(query(collection(db, 'contactos'), where('userId', '==', user.uid)), (snap) => {
+        setContactos(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      }),
+      onSnapshot(query(collection(db, 'listas'), where('userId', '==', user.uid)), (snap) => {
+        setListas(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      }),
+    ];
+    return () => unsubs.forEach((u) => u());
   }, [user]);
 
-  async function handleImportar({ nombre, telefono }) {
-    await addDoc(collection(db, 'contactos'), {
-      nombre,
-      telefono,
-      estado: 'activo',
-      importadoEn: serverTimestamp(),
-      userId: user.uid,
+  async function handleImportarLote(contactosNuevos, { listaId, nombreLista }) {
+    let listaIdFinal = listaId;
+    if (!listaIdFinal) {
+      const listaRef = await addDoc(collection(db, 'listas'), {
+        nombre: nombreLista,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+      });
+      listaIdFinal = listaRef.id;
+    }
+
+    const batch = writeBatch(db);
+    contactosNuevos.forEach(({ nombre, telefono }) => {
+      const ref = doc(collection(db, 'contactos'));
+      batch.set(ref, {
+        nombre,
+        telefono,
+        estado: 'activo',
+        listaId: listaIdFinal,
+        listaNombre: nombreLista,
+        importadoEn: serverTimestamp(),
+        userId: user.uid,
+      });
     });
+    await batch.commit();
   }
 
   async function handleEliminar(id) {
@@ -69,9 +92,11 @@ export default function Contactos() {
   const filtrados = useMemo(
     () =>
       contactos.filter(
-        (c) => c.nombre?.toLowerCase().includes(busqueda.toLowerCase()) || c.telefono?.includes(busqueda)
+        (c) =>
+          (!filtroLista || c.listaId === filtroLista) &&
+          (c.nombre?.toLowerCase().includes(busqueda.toLowerCase()) || c.telefono?.includes(busqueda))
       ),
-    [contactos, busqueda]
+    [contactos, busqueda, filtroLista]
   );
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
@@ -93,19 +118,31 @@ export default function Contactos() {
         <p className="mt-2 text-sm text-white/40">{contactos.length} contactos cargados</p>
       </div>
 
-      <CargadorContactos existentes={contactos} onImportar={handleImportar} />
+      <CargadorContactos existentes={contactos} listas={listas} onImportarLote={handleImportarLote} />
 
       <div className="glass-shell animate-fade-up">
         <div className="glass-core p-6">
           <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-            <div className="relative w-full max-w-xs">
-              <MagnifyingGlass size={16} weight="light" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
-              <input
-                value={busqueda}
-                onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
-                placeholder="Buscar nombre o teléfono…"
-                className="input-field pl-11"
-              />
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative w-full max-w-xs">
+                <MagnifyingGlass size={16} weight="light" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                <input
+                  value={busqueda}
+                  onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
+                  placeholder="Buscar nombre o teléfono…"
+                  className="input-field pl-11"
+                />
+              </div>
+              <select
+                value={filtroLista}
+                onChange={(e) => { setFiltroLista(e.target.value); setPagina(1); }}
+                className="input-field w-full max-w-[220px] appearance-none"
+              >
+                <option value="">Todas las listas</option>
+                {listas.map((l) => (
+                  <option key={l.id} value={l.id}>{l.nombre}</option>
+                ))}
+              </select>
             </div>
             <div className="flex items-center gap-3">
               {seleccionados.size > 0 && (
@@ -126,6 +163,7 @@ export default function Contactos() {
                   <th className="py-3 pr-4"></th>
                   <th className="py-3 pr-4">Nombre</th>
                   <th className="py-3 pr-4">Teléfono</th>
+                  <th className="py-3 pr-4">Lista</th>
                   <th className="py-3 pr-4">Estado</th>
                   <th className="py-3"></th>
                 </tr>
@@ -145,6 +183,11 @@ export default function Contactos() {
                     <td className="py-3 pr-4 text-white/50">{c.telefono}</td>
                     <td className="py-3 pr-4">
                       <span className="rounded-full bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-wider text-white/50">
+                        {c.listaNombre || '—'}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <span className="rounded-full bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-wider text-white/50">
                         {c.estado}
                       </span>
                     </td>
@@ -157,7 +200,7 @@ export default function Contactos() {
                 ))}
                 {pageItems.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-white/30">Sin contactos.</td>
+                    <td colSpan={6} className="py-8 text-center text-white/30">Sin contactos.</td>
                   </tr>
                 )}
               </tbody>

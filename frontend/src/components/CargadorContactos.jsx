@@ -3,11 +3,19 @@ import Papa from 'papaparse';
 import { UploadSimple, WarningCircle, CheckCircle } from 'phosphor-react';
 import { validarArchivoCsv, validarFilaCsv } from '../services/validaciones';
 
-export default function CargadorContactos({ existentes = [], onImportar }) {
+const NUEVA_LISTA = '__nueva__';
+
+export default function CargadorContactos({ existentes = [], listas = [], onImportarLote }) {
+  const [listaSeleccionada, setListaSeleccionada] = useState('');
+  const [nombreNuevaLista, setNombreNuevaLista] = useState('');
   const [preview, setPreview] = useState(null);
   const [errorArchivo, setErrorArchivo] = useState('');
   const [progreso, setProgreso] = useState(0);
   const [importando, setImportando] = useState(false);
+
+  const creandoNuevaLista = listaSeleccionada === NUEVA_LISTA;
+  const nombreListaFinal = creandoNuevaLista ? nombreNuevaLista.trim() : listas.find((l) => l.id === listaSeleccionada)?.nombre;
+  const listaLista = creandoNuevaLista ? nombreNuevaLista.trim().length > 0 : Boolean(listaSeleccionada);
 
   function handleFile(e) {
     const file = e.target.files?.[0];
@@ -36,7 +44,11 @@ export default function CargadorContactos({ existentes = [], onImportar }) {
           return;
         }
 
-        const telefonosExistentes = new Set(existentes.map((c) => c.telefono));
+        // Duplicados solo cuentan dentro de la misma lista; el mismo número
+        // puede existir en listas distintas.
+        const telefonosExistentes = new Set(
+          existentes.filter((c) => c.listaId === listaSeleccionada).map((c) => c.telefono)
+        );
         const vistosEnImport = new Set();
 
         const validas = [];
@@ -72,14 +84,14 @@ export default function CargadorContactos({ existentes = [], onImportar }) {
   }
 
   async function handleConfirmar() {
-    if (!preview?.validas?.length) return;
+    if (!preview?.validas?.length || !listaLista) return;
     setImportando(true);
     setProgreso(0);
-    const total = preview.validas.length;
-    for (let i = 0; i < total; i++) {
-      await onImportar(preview.validas[i]);
-      setProgreso(Math.round(((i + 1) / total) * 100));
-    }
+    await onImportarLote(preview.validas, {
+      listaId: creandoNuevaLista ? null : listaSeleccionada,
+      nombreLista: nombreListaFinal,
+    });
+    setProgreso(100);
     setImportando(false);
     setPreview(null);
   }
@@ -87,11 +99,40 @@ export default function CargadorContactos({ existentes = [], onImportar }) {
   return (
     <div className="glass-shell animate-fade-up">
       <div className="glass-core space-y-5 p-6 sm:p-8">
-        <label className="group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-10 text-center transition-colors duration-300 hover:border-emerald-glow/40">
+        <div>
+          <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/40">Lista de contactos</label>
+          <select
+            value={listaSeleccionada}
+            onChange={(e) => setListaSeleccionada(e.target.value)}
+            className="input-field appearance-none"
+          >
+            <option value="">Selecciona una lista…</option>
+            {listas.map((l) => (
+              <option key={l.id} value={l.id}>{l.nombre}</option>
+            ))}
+            <option value={NUEVA_LISTA}>+ Crear nueva lista…</option>
+          </select>
+          {creandoNuevaLista && (
+            <input
+              value={nombreNuevaLista}
+              onChange={(e) => setNombreNuevaLista(e.target.value)}
+              placeholder="Nombre de la nueva lista (ej. Clientes Synergy 2025)"
+              className="input-field mt-2"
+            />
+          )}
+        </div>
+
+        <label
+          className={`group flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-10 text-center transition-colors duration-300 ${
+            listaLista ? 'cursor-pointer hover:border-emerald-glow/40' : 'cursor-not-allowed opacity-40'
+          }`}
+        >
           <UploadSimple size={22} weight="light" className="text-white/40" />
-          <span className="text-sm text-white/60">Arrastra tu CSV o haz clic para elegir</span>
+          <span className="text-sm text-white/60">
+            {listaLista ? 'Arrastra tu CSV o haz clic para elegir' : 'Elige o crea una lista primero'}
+          </span>
           <span className="text-[11px] text-white/30">Columnas: nombre, teléfono · máx 5MB</span>
-          <input type="file" accept=".csv,.xlsx" onChange={handleFile} className="hidden" />
+          <input type="file" accept=".csv,.xlsx" onChange={handleFile} disabled={!listaLista} className="hidden" />
         </label>
 
         {errorArchivo && (
@@ -103,7 +144,8 @@ export default function CargadorContactos({ existentes = [], onImportar }) {
         {preview && (
           <div className="space-y-4">
             <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 text-sm text-white/70">
-              Importarás <span className="text-emerald-glow">{preview.validas.length}</span> contactos nuevos
+              Importarás <span className="text-emerald-glow">{preview.validas.length}</span> contactos nuevos a{' '}
+              <span className="text-emerald-glow">{nombreListaFinal}</span>
               {preview.duplicadosImport + preview.duplicadosDb > 0 && (
                 <>, {preview.duplicadosImport + preview.duplicadosDb} duplicados</>
               )}
