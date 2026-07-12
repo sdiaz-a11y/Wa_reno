@@ -14,10 +14,10 @@ exports.iniciarPairingWhatsApp = onRequest(
   manejarPairing
 );
 
-const MAX_POR_HORA = 15;
+const MAX_POR_HORA = 30;
 const MAX_POR_DIA = 100;
 const DELAY_MIN_MS = 3000;
-const DELAY_MAX_MS = 5000;
+const DELAY_MAX_MS = 6000;
 
 function delayAleatorio() {
   const ms = DELAY_MIN_MS + Math.random() * (DELAY_MAX_MS - DELAY_MIN_MS);
