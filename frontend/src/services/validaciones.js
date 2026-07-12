@@ -3,15 +3,6 @@
 const SHORTENERS = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'is.gd', 'ow.ly', 'buff.ly'];
 const NUMEROS_PRUEBA = ['5211111111', '5212222222', '5210000000'];
 
-export function escapeHtml(str = '') {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
 export function normalizarTelefono(raw) {
   const digits = String(raw || '').replace(/[^\d]/g, '');
   if (digits.startsWith('52') && digits.length === 12) return `+${digits}`;
@@ -71,7 +62,6 @@ export function validarPlantilla({ nombre, contenido, variablesDeclaradas = [] }
     errores,
     advertencias,
     variablesUsadas,
-    contenidoEscapado: escapeHtml(contenido),
   };
 }
 

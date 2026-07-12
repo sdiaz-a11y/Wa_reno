@@ -33,6 +33,13 @@
   .input-field-error {
     @apply border-red-400/60 focus:border-red-400/80;
   }
+  /* Los <option> de un <select> los dibuja el SO/navegador, no Tailwind:
+     sin esto, el texto blanco queda invisible sobre el fondo blanco por
+     defecto del dropdown nativo hasta pasar el cursor encima. */
+  select option {
+    background-color: #111111;
+    color: #ffffff;
+  }
 }
 
 .bg-noise::before {

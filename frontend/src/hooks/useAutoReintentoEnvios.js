@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { db, auth } from '../services/firebase';
 
 const INTERVALO_REINTENTO_MS = 65 * 60 * 1000; // 1h 5min: cubre la hora del límite de envíos + margen
 const CHEQUEO_MS = 60 * 1000;
@@ -17,7 +17,11 @@ export function marcarProximoIntento(uid) {
 
 async function dispararEnvio() {
   try {
-    await fetch('/api/disparar-envio', { method: 'POST' });
+    const token = await auth.currentUser?.getIdToken();
+    await fetch('/api/disparar-envio', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
   } catch {
     // se reintenta en el próximo chequeo, sin bloquear la UI
   }

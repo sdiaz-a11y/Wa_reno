@@ -127,14 +127,14 @@ export default function Dashboard() {
 
         <div className="glass-shell animate-fade-up md:col-span-5">
           <div className="glass-core p-6">
-            <h2 className="mb-4 font-display text-lg font-semibold">Próximas campañas</h2>
+            <h2 className="mb-4 font-display text-lg font-semibold">Campañas pendientes</h2>
             {proximasCampanas.length === 0 ? (
-              <p className="text-sm text-white/30">No hay campañas programadas.</p>
+              <p className="text-sm text-white/30">No hay campañas esperando envío.</p>
             ) : (
               <ul className="space-y-2">
                 {proximasCampanas.map((c) => (
                   <li key={c.id} className="rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 text-sm text-white/70">
-                    {c.fechaProgramada?.toDate?.().toLocaleString('es-MX') || '—'}
+                    {c.contactosIds?.length || 0} contactos · esperando envío
                   </li>
                 ))}
               </ul>

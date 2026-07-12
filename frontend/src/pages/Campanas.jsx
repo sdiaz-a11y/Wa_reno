@@ -10,13 +10,17 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { X, ArrowClockwise } from 'phosphor-react';
-import { db } from '../services/firebase';
+import { db, auth } from '../services/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { marcarProximoIntento } from '../hooks/useAutoReintentoEnvios';
 import SchedulerCampana from '../components/SchedulerCampana';
 
 async function dispararEnvio() {
-  const resp = await fetch('/api/disparar-envio', { method: 'POST' });
+  const token = await auth.currentUser?.getIdToken();
+  const resp = await fetch('/api/disparar-envio', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
   const data = await resp.json();
   return { ok: resp.ok, error: data.error };
 }

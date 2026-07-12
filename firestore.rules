@@ -1,24 +1,32 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Herramienta de un solo usuario: aunque el registro público de la app
+    // siga abierto, solo esta cuenta puede leer/escribir cualquier dato.
+    // Evita que alguien que se registre por su cuenta use la sesión de
+    // WhatsApp compartida para mandar mensajes.
+    function esPropietario() {
+      return request.auth != null && request.auth.token.email == 'sdiaz@zigma3.com';
+    }
+
     match /plantillas/{id} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if esPropietario() && request.auth.uid == resource.data.userId;
+      allow create: if esPropietario() && request.auth.uid == request.resource.data.userId;
     }
     match /contactos/{id} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if esPropietario() && request.auth.uid == resource.data.userId;
+      allow create: if esPropietario() && request.auth.uid == request.resource.data.userId;
     }
     match /listas/{id} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if esPropietario() && request.auth.uid == resource.data.userId;
+      allow create: if esPropietario() && request.auth.uid == request.resource.data.userId;
     }
     match /campanas/{id} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if esPropietario() && request.auth.uid == resource.data.userId;
+      allow create: if esPropietario() && request.auth.uid == request.resource.data.userId;
     }
     match /logs_envios/{id} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read: if esPropietario() && request.auth.uid == resource.data.userId;
       allow write: if false;
     }
     // Sesión de WhatsApp (Baileys): solo el backend (Admin SDK) la toca.

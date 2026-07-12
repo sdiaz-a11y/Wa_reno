@@ -51,20 +51,24 @@ export default function Contactos() {
       listaIdFinal = listaRef.id;
     }
 
-    const batch = writeBatch(db);
-    contactosNuevos.forEach(({ nombre, telefono }) => {
-      const ref = doc(collection(db, 'contactos'));
-      batch.set(ref, {
-        nombre,
-        telefono,
-        estado: 'activo',
-        listaId: listaIdFinal,
-        listaNombre: nombreLista,
-        importadoEn: serverTimestamp(),
-        userId: user.uid,
+    // Firestore permite máximo 500 operaciones por batch.
+    const TAMANO_LOTE = 450;
+    for (let i = 0; i < contactosNuevos.length; i += TAMANO_LOTE) {
+      const batch = writeBatch(db);
+      contactosNuevos.slice(i, i + TAMANO_LOTE).forEach(({ nombre, telefono }) => {
+        const ref = doc(collection(db, 'contactos'));
+        batch.set(ref, {
+          nombre,
+          telefono,
+          estado: 'activo',
+          listaId: listaIdFinal,
+          listaNombre: nombreLista,
+          importadoEn: serverTimestamp(),
+          userId: user.uid,
+        });
       });
-    });
-    await batch.commit();
+      await batch.commit();
+    }
   }
 
   async function handleEliminar(id) {

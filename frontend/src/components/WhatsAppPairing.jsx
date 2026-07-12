@@ -59,7 +59,7 @@ export default function WhatsAppPairing() {
     } catch (err) {
       if (err.name !== 'AbortError') {
         setEstado('error');
-        setError('No se pudo conectar con el servidor. Intenta de nuevo.');
+        setError('No se pudo conectar. Esta función requiere el plan Blaze de Firebase (Cloud Functions) — usa scripts/pair-whatsapp-web.js mientras tanto.');
       }
     }
   }

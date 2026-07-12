@@ -4,7 +4,7 @@ const fs = require('fs');
 const QRCode = require('qrcode');
 const { getAuth } = require('firebase-admin/auth');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
-const { subirSesion, borrarSesion } = require('./session-storage');
+const { subirSesion } = require('./session-storage');
 
 const TIEMPO_LIMITE_MS = 75 * 1000;
 
@@ -35,9 +35,10 @@ async function manejarPairing(req, res) {
   res.set('Content-Type', 'application/x-ndjson');
   res.status(200);
 
+  // authFolder siempre es una carpeta temporal nueva, así que Baileys pide
+  // un QR fresco sin necesidad de borrar la sesión guardada de antemano;
+  // subirSesion() la sobreescribe solo al conectar con éxito.
   const authFolder = path.join(os.tmpdir(), `baileys-pairing-${Date.now()}`);
-  await borrarSesion();
-
   const { state, saveCreds } = await useMultiFileAuthState(authFolder);
   const sock = makeWASocket({ auth: state });
 
