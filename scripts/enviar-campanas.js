@@ -13,7 +13,7 @@ const { default: makeWASocket, useMultiFileAuthState } = require('@whiskeysocket
 const SERVICE_ACCOUNT_PATH = path.join(__dirname, 'serviceAccountKey.json');
 const AUTH_FOLDER = path.join(__dirname, 'baileys-session');
 
-const MAX_POR_HORA = 30;
+const MAX_POR_HORA = 20;
 const MAX_POR_DIA = 100;
 const DELAY_MIN_MS = 3000;
 const DELAY_MAX_MS = 6000;

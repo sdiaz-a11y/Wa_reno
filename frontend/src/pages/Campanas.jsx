@@ -12,6 +12,7 @@ import {
 import { X, ArrowClockwise } from 'phosphor-react';
 import { db } from '../services/firebase';
 import { useAuth } from '../hooks/useAuth';
+import { marcarProximoIntento } from '../hooks/useAutoReintentoEnvios';
 import SchedulerCampana from '../components/SchedulerCampana';
 
 async function dispararEnvio() {
@@ -70,6 +71,7 @@ export default function Campanas() {
       userId: user.uid,
     });
     await dispararEnvio();
+    marcarProximoIntento(user.uid);
   }
 
   async function handleCancelar(id) {
@@ -80,6 +82,7 @@ export default function Campanas() {
     setRevisando(true);
     setMensajeRevisar('');
     const { ok, error } = await dispararEnvio();
+    if (ok) marcarProximoIntento(user.uid);
     setMensajeRevisar(ok ? 'Revisando pendientes ahora mismo…' : `Error: ${error}`);
     setRevisando(false);
   }
@@ -114,7 +117,10 @@ export default function Campanas() {
       {pendientes.length > 0 && (
         <div className="glass-shell animate-fade-up">
           <div className="glass-core p-6">
-            <h2 className="mb-4 font-display text-lg font-semibold">Campañas en curso</h2>
+            <h2 className="font-display text-lg font-semibold">Campañas en curso</h2>
+            <p className="mb-4 mt-1 text-xs text-white/30">
+              Se reintentan solas cada ~1h con esta pestaña abierta. Si la cierras, usa "Revisar pendientes".
+            </p>
             <ul className="space-y-2">
               {pendientes.map((c) => (
                 <li key={c.id} className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 text-sm">

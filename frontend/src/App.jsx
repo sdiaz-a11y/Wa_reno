@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
+import { useAutoReintentoEnvios } from './hooks/useAutoReintentoEnvios';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -10,6 +11,7 @@ import Historial from './pages/Historial';
 
 function PrivateLayout({ children }) {
   const { user, loading } = useAuth();
+  useAutoReintentoEnvios(user);
 
   if (loading) {
     return (
